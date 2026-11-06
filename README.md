@@ -2,6 +2,8 @@
 
 Helper scripts for working with VideoExpress media. The scripts are written for Windows PowerShell.
 
+> **Disclaimer:** These scripts are provided as-is, without warranty of any kind. Use them at your own risk. Test on copies of your files first; the author accepts no responsibility for lost or damaged files or any other problems caused by running them.
+
 ## Scripts
 
 - [`tools/ve-audio-clean.ps1`](tools/ve-audio-clean.ps1) — cleans the generated audio on VideoExpress clips (rumble, crackle, hiss, noise between words) without touching the video.

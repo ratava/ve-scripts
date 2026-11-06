@@ -16,6 +16,11 @@
 
 .EXAMPLE
     .\Record-ComputerAudio.ps1 -Device "CABLE Output (VB-Audio Virtual Cable)" -Duration 600
+.NOTES
+    DISCLAIMER: Provided as-is, without warranty of any kind. Use at your own
+    risk. Test on copies of your files first; the author accepts no
+    responsibility for lost or damaged files or any other problems caused by
+    running this script.
 #>
 param(
     # Recording device name. If omitted, the first virtual-audio-capturer / Stereo Mix / VB-Cable device found is used.

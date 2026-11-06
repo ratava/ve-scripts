@@ -14,6 +14,11 @@
 
 .EXAMPLE
     .\Compress-ToSize.ps1 -InputFile clip.mp4 -TargetMB 8 -MaxHeight 720
+.NOTES
+    DISCLAIMER: Provided as-is, without warranty of any kind. Use at your own
+    risk. Test on copies of your files first; the author accepts no
+    responsibility for lost or damaged files or any other problems caused by
+    running this script.
 #>
 param(
     [Parameter(Mandatory)] [string] $InputFile,

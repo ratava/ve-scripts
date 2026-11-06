@@ -7,6 +7,11 @@
 
 .EXAMPLE
     .\Split-OnSilence.ps1 -InputFile recording.mp3 -Noise -30dB -MinSilence 1
+.NOTES
+    DISCLAIMER: Provided as-is, without warranty of any kind. Use at your own
+    risk. Test on copies of your files first; the author accepts no
+    responsibility for lost or damaged files or any other problems caused by
+    running this script.
 #>
 param(
     [Parameter(Mandatory)] [string] $InputFile,

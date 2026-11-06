@@ -14,6 +14,11 @@
     -Normalize     even out loudness across clips (-16 LUFS); dialogue clips only,
                    because on a clip with no speech it turns the leftover noise up
     -AllStrengths  write Light, Medium and Strong versions of every clip to compare by ear
+.NOTES
+    DISCLAIMER: Provided as-is, without warranty of any kind. Use at your own
+    risk. Test on copies of your files first; the author accepts no
+    responsibility for lost or damaged files or any other problems caused by
+    running this script.
 #>
 param(
     [Parameter(Mandatory = $true)][string]$Folder,
