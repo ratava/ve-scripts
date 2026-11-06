@@ -7,7 +7,6 @@ Scripts, prompts and helper tools for VideoExpress projects.
 | Folder | What goes in it |
 |---|---|
 | `projects/` | One folder per VideoExpress project. Copy `projects/_template` to start a new one. |
-| `music/` | Music prompts and a running list of genres already used, so new tracks don't repeat old ones. |
 | `tools/` | Helper scripts, e.g. splitting audio on silence. |
 
 ## Tools
