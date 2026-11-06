@@ -6,10 +6,11 @@ Helper scripts for working with VideoExpress media. The scripts are written for 
 
 - [`tools/Record-ComputerAudio.ps1`](tools/Record-ComputerAudio.ps1) — records whatever the computer is playing (e.g. a browser tab) to an MP3 using ffmpeg.
 - [`tools/Split-OnSilence.ps1`](tools/Split-OnSilence.ps1) — splits an MP3 into parts at silent gaps using ffmpeg.
+- [`tools/Compress-ToSize.ps1`](tools/Compress-ToSize.ps1) — compresses a video to a target file size (e.g. to fit an upload limit).
 
 ## Setup
 
-### 1. Install ffmpeg (needed by both scripts)
+### 1. Install ffmpeg (needed by all the scripts)
 
 Open PowerShell and run:
 
@@ -99,3 +100,14 @@ ffmpeg -hide_banner -ss 83 -t 1 -i recording.mp3 -af volumedetect -f null - 2>&1
 ```
 
 Set `-Noise` a few dB above the `mean_volume` it reports.
+
+### Compress a video to a set size
+
+```powershell
+.\tools\Compress-ToSize.ps1 -InputFile clip.mp4 -TargetMB 25                  # fit in 25 MB
+.\tools\Compress-ToSize.ps1 -InputFile clip.mp4 -TargetMB 8 -MaxHeight 720     # also scale down to 720p
+```
+
+The result is saved next to the original as `clip_25MB.mp4` unless you pass `-OutputFile`. It encodes the video twice (two-pass), so it takes a while, but the file ends up just under the target size.
+
+If the result looks blocky, the target is too small for the video's length and resolution. Add `-MaxHeight 720` (or `480`), or lower the audio with `-AudioKbps 96`.
