@@ -4,6 +4,7 @@ Helper scripts for working with VideoExpress media. The scripts are written for 
 
 ## Scripts
 
+- [`tools/ve-audio-clean.ps1`](tools/ve-audio-clean.ps1) — cleans the generated audio on VideoExpress clips (rumble, crackle, hiss, noise between words) without touching the video.
 - [`tools/Record-ComputerAudio.ps1`](tools/Record-ComputerAudio.ps1) — records whatever the computer is playing (e.g. a browser tab) to an MP3 using ffmpeg.
 - [`tools/Split-OnSilence.ps1`](tools/Split-OnSilence.ps1) — splits an MP3 into parts at silent gaps using ffmpeg.
 - [`tools/Compress-ToSize.ps1`](tools/Compress-ToSize.ps1) — compresses a video to a target file size (e.g. to fit an upload limit).
@@ -111,3 +112,19 @@ Set `-Noise` a few dB above the `mean_volume` it reports.
 The result is saved next to the original as `clip_25MB.mp4` unless you pass `-OutputFile`. It encodes the video twice (two-pass), so it takes a while, but the file ends up just under the target size.
 
 If the result looks blocky, the target is too small for the video's length and resolution. Add `-MaxHeight 720` (or `480`), or lower the audio with `-AudioKbps 96`.
+
+### Clean the audio on VideoExpress clips
+
+```powershell
+.\tools\ve-audio-clean.ps1 -Folder "C:\path\to\clips"                    # Medium strength
+.\tools\ve-audio-clean.ps1 -Folder "C:\path\to\clips" -Strength Strong
+.\tools\ve-audio-clean.ps1 -Folder "C:\path\to\clips" -AllStrengths      # Light, Medium and Strong versions to compare
+.\tools\ve-audio-clean.ps1 -Folder "C:\path\to\clips" -HumHz 50          # also remove a steady 50 Hz hum
+.\tools\ve-audio-clean.ps1 -Folder "C:\path\to\clips" -Normalize         # even out loudness (dialogue clips only)
+```
+
+It processes every `.mp4`, `.mov` and `.webm` in the folder and writes the results to a `cleaned` subfolder, named like `clip_clean-medium.mp4`. The video is copied as-is; only the audio is re-encoded.
+
+- **Strength:** start with `-AllStrengths` on a few clips and pick the one that sounds best. `Strong` removes more noise but can make voices sound thin or cut off quiet word endings.
+- **`-HumHz`:** only use it if there's a steady hum. Pick `50` or `60`, whichever matches the hum.
+- **`-Normalize`:** only for clips with speech. On clips without speech it turns the leftover noise up.
