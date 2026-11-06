@@ -1,8 +1,101 @@
 # ve-scripts
 
-Helper scripts for working with VideoExpress media.
+Helper scripts for working with VideoExpress media. The scripts are written for Windows PowerShell.
 
 ## Scripts
 
 - [`tools/Record-ComputerAudio.ps1`](tools/Record-ComputerAudio.ps1) — records whatever the computer is playing (e.g. a browser tab) to an MP3 using ffmpeg.
 - [`tools/Split-OnSilence.ps1`](tools/Split-OnSilence.ps1) — splits an MP3 into parts at silent gaps using ffmpeg.
+
+## Setup
+
+### 1. Install ffmpeg (needed by both scripts)
+
+Open PowerShell and run:
+
+```powershell
+winget install Gyan.FFmpeg
+```
+
+Close and reopen PowerShell, then check it works:
+
+```powershell
+ffmpeg -version
+```
+
+If you get "ffmpeg is not recognized", restart your computer. If it still isn't found, download a build from <https://www.gyan.dev/ffmpeg/builds/>, unzip it (e.g. to `C:\ffmpeg`) and add its `bin` folder (e.g. `C:\ffmpeg\bin`) to your `PATH`.
+
+### 2. Install a loopback audio device (needed by Record-ComputerAudio.ps1)
+
+Windows can't record what it is playing unless there is a recording device that captures it. Use **one** of these:
+
+**Option A: virtual-audio-capturer (recommended)**
+
+1. Go to <https://github.com/rdp/screen-capture-recorder-to-video-windows-free/releases>.
+2. Download the latest `Setup.Screen.Capturer.Recorder.*.exe` and run it. It installs `virtual-audio-capturer`, which records whatever your default speakers are playing.
+3. You don't need to change any sound settings. You keep hearing the audio while it records.
+
+**Option B: Stereo Mix (built in on some PCs)**
+
+1. Open **Control Panel > Sound** (or run `mmsys.cpl`), then the **Recording** tab.
+2. Right-click in the list and tick **Show Disabled Devices**.
+3. If **Stereo Mix** appears, right-click it and choose **Enable**. If it doesn't appear, your sound driver doesn't provide it; use option A or C.
+
+**Option C: VB-Cable**
+
+1. Download and install VB-Cable from <https://vb-audio.com/Cable/> (run the installer as administrator, then restart).
+2. Set **CABLE Input** as your playback device, or set it as the output for just your browser in **Settings > System > Sound > Volume mixer**.
+3. You won't hear that audio while it's routed to the cable unless you also turn on **Listen to this device** for **CABLE Output** (Sound > Recording > CABLE Output > Properties > Listen).
+
+Check that the device shows up:
+
+```powershell
+.\tools\Record-ComputerAudio.ps1 -ListDevices
+```
+
+### 3. Allow the scripts to run
+
+Windows blocks downloaded scripts by default. Run this once:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+If a script still won't run, unblock it:
+
+```powershell
+Unblock-File .\tools\*.ps1
+```
+
+## Usage
+
+### Record computer audio
+
+```powershell
+.\tools\Record-ComputerAudio.ps1                        # record until you press q
+.\tools\Record-ComputerAudio.ps1 -OutputFile song.mp3   # choose the file name
+.\tools\Record-ComputerAudio.ps1 -Duration 600          # stop by itself after 10 minutes
+.\tools\Record-ComputerAudio.ps1 -Device "Stereo Mix (Realtek(R) Audio)"   # pick a device
+```
+
+Without `-Device`, it uses the first virtual-audio-capturer, Stereo Mix or VB-Cable device it finds. Recordings are saved as `recording_<date>_<time>.mp3` at 192 kbps unless you say otherwise.
+
+### Split a recording on silence
+
+```powershell
+.\tools\Split-OnSilence.ps1 -InputFile recording.mp3
+```
+
+Parts are saved as `part_000.mp3`, `part_001.mp3`, and so on. It prints the cut points first.
+
+If splits are missed:
+- Lower `-MinSilence` (default `1` second), e.g. `-MinSilence 0.5`, for short gaps.
+- Raise `-Noise` (default `-30dB`), e.g. `-Noise -25dB`, if the gaps have background hiss.
+
+To see how loud a gap is (here, one second starting at 83 s):
+
+```powershell
+ffmpeg -hide_banner -ss 83 -t 1 -i recording.mp3 -af volumedetect -f null - 2>&1 | Select-String "mean_volume"
+```
+
+Set `-Noise` a few dB above the `mean_volume` it reports.

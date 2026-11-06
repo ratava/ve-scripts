@@ -3,9 +3,8 @@
     Records whatever the computer is playing (e.g. a browser tab) to an MP3 using ffmpeg.
 
 .DESCRIPTION
-    Needs a loopback recording device: enable "Stereo Mix" in Sound settings
-    (Recording tab > right-click > Show Disabled Devices > Enable), or install
-    a virtual device such as VB-Cable.
+    Needs ffmpeg and a loopback recording device (virtual-audio-capturer,
+    Stereo Mix or VB-Cable). See the Setup section of README.md.
 
     Press q in the window to stop recording.
 
@@ -19,7 +18,7 @@
     .\Record-ComputerAudio.ps1 -Device "CABLE Output (VB-Audio Virtual Cable)" -Duration 600
 #>
 param(
-    # Recording device name. If omitted, the first Stereo Mix / VB-Cable / virtual-audio-capturer device found is used.
+    # Recording device name. If omitted, the first virtual-audio-capturer / Stereo Mix / VB-Cable device found is used.
     [string] $Device,
     [string] $OutputFile = ("recording_{0:yyyyMMdd_HHmmss}.mp3" -f (Get-Date)),
     [string] $Bitrate = "192k",
@@ -27,6 +26,11 @@ param(
     [int] $Duration = 0,
     [switch] $ListDevices
 )
+
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+    "ffmpeg was not found. Install it with: winget install Gyan.FFmpeg  (see the Setup section of README.md)"
+    return
+}
 
 function Get-AudioDevices {
     $log = & ffmpeg -hide_banner -list_devices true -f dshow -i dummy 2>&1
@@ -49,9 +53,12 @@ if ($ListDevices) {
 }
 
 if (-not $Device) {
-    $Device = $devices | Where-Object { $_ -match 'Stereo Mix|CABLE Output|virtual-audio-capturer' } | Select-Object -First 1
+    foreach ($pattern in 'virtual-audio-capturer', 'Stereo Mix', 'CABLE Output') {
+        $Device = $devices | Where-Object { $_ -match $pattern } | Select-Object -First 1
+        if ($Device) { break }
+    }
     if (-not $Device) {
-        "No loopback device found. Enable Stereo Mix or install VB-Cable, or pass -Device."
+        "No loopback device found. Install virtual-audio-capturer, enable Stereo Mix or install VB-Cable (see README.md), or pass -Device."
         "Audio recording devices:"
         $devices | ForEach-Object { "  $_" }
         return

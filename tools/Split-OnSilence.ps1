@@ -2,6 +2,9 @@
 .SYNOPSIS
     Splits an MP3 into parts at silent gaps using ffmpeg.
 
+.DESCRIPTION
+    Needs ffmpeg. See the Setup section of README.md.
+
 .EXAMPLE
     .\Split-OnSilence.ps1 -InputFile recording.mp3 -Noise -30dB -MinSilence 1
 #>
@@ -13,6 +16,11 @@ param(
     [double] $MinSilence = 1,
     [string] $OutputPattern = "part_%03d.mp3"
 )
+
+if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+    "ffmpeg was not found. Install it with: winget install Gyan.FFmpeg  (see the Setup section of README.md)"
+    return
+}
 
 $inv = [Globalization.CultureInfo]::InvariantCulture
 $d = $MinSilence.ToString($inv)
