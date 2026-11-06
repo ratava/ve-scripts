@@ -130,3 +130,7 @@ It processes every `.mp4`, `.mov` and `.webm` in the folder and writes the resul
 - **Strength:** start with `-AllStrengths` on a few clips and pick the one that sounds best. `Strong` removes more noise but can make voices sound thin or cut off quiet word endings.
 - **`-HumHz`:** only use it if there's a steady hum. Pick `50` or `60`, whichever matches the hum.
 - **`-Normalize`:** only for clips with speech. On clips without speech it turns the leftover noise up.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
