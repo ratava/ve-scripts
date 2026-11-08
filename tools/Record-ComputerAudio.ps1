@@ -50,35 +50,50 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
     return
 }
 
-function Get-AudioDevices {
+# Lists every DirectShow device ffmpeg can see, with its type. Older ffmpeg
+# versions group devices under "audio"/"video" headings; newer ones put the type
+# after each name, e.g. "Stereo Mix (Realtek(R) Audio)" (audio). Virtual devices
+# are sometimes given a type other than audio, so auto-detection checks them all.
+function Get-DshowDevices {
     $log = & ffmpeg -hide_banner -list_devices true -f dshow -i dummy 2>&1
-    $inAudio = $false
+    $section = ''
     foreach ($line in $log) {
         $l = "$line"
-        if ($l -match 'DirectShow audio devices') { $inAudio = $true; continue }
-        if ($l -match 'DirectShow video devices') { $inAudio = $false; continue }
+        if ($l -match 'DirectShow audio devices') { $section = 'audio'; continue }
+        if ($l -match 'DirectShow video devices') { $section = 'video'; continue }
         if ($l -match 'Alternative name') { continue }
-        if ($l -match '"([^"]+)"' -and ($inAudio -or $l -match '\(audio\)')) { $Matches[1] }
+        if ($l -match '"([^"]+)"\s*(\(([^)]*)\))?') {
+            $type = if ($Matches[3]) { $Matches[3] } else { $section }
+            [pscustomobject]@{ Name = $Matches[1]; Type = $type }
+        }
     }
 }
 
-$devices = @(Get-AudioDevices)
+function Show-Devices($list) {
+    "Recording devices:"
+    $list | Where-Object { $_.Type -match 'audio' } | ForEach-Object { "  $($_.Name)" }
+    $other = @($list | Where-Object { $_.Type -notmatch 'audio' })
+    if ($other) {
+        "Other devices:"
+        $other | ForEach-Object { "  $($_.Name)  ($($_.Type))" }
+    }
+}
+
+$devices = @(Get-DshowDevices)
 
 if ($ListDevices) {
-    "Audio recording devices:"
-    $devices | ForEach-Object { "  $_" }
+    Show-Devices $devices
     return
 }
 
 if (-not $Device) {
     foreach ($pattern in 'virtual-audio-capturer', 'Stereo Mix', 'CABLE Output') {
-        $Device = $devices | Where-Object { $_ -match $pattern } | Select-Object -First 1
+        $Device = $devices | Where-Object { $_.Name -match $pattern } | Select-Object -First 1 -ExpandProperty Name
         if ($Device) { break }
     }
     if (-not $Device) {
         "No loopback device found. Install virtual-audio-capturer, enable Stereo Mix or install VB-Cable (see README.md), or pass -Device."
-        "Audio recording devices:"
-        $devices | ForEach-Object { "  $_" }
+        Show-Devices $devices
         return
     }
 }
