@@ -23,6 +23,9 @@
 
 .EXAMPLE
     .\Record-ComputerAudio.ps1 -StopSilence 0      # don't stop on silence; record until q is pressed
+
+.EXAMPLE
+    .\Record-ComputerAudio.ps1 -Tune432            # retune from A=440 Hz to A=432 Hz (Rubber Band)
 .NOTES
     DISCLAIMER: Provided as-is, without warranty of any kind. Use at your own
     risk. Test on copies of your files first; the author accepts no
@@ -42,6 +45,9 @@ param(
     [string] $SilenceThreshold = "-30dB",
     # Keep all the silence before the audio starts instead of trimming it.
     [switch] $KeepLeadingSilence,
+    # Retune the recording from A=440 Hz to A=432 Hz with the Rubber Band pitch
+    # shifter (about 32 cents lower), keeping the speed the same.
+    [switch] $Tune432,
     [switch] $ListDevices
 )
 
@@ -100,6 +106,12 @@ if (-not $Device) {
 
 $inv = [Globalization.CultureInfo]::InvariantCulture
 
+if ($Tune432 -and -not ((& ffmpeg -hide_banner -filters 2>&1) -match '\brubberband\b')) {
+    "Your ffmpeg doesn't include the rubberband filter needed for -Tune432."
+    "Install the full build with: winget install Gyan.FFmpeg  (see the Setup section of README.md)"
+    return
+}
+
 $filters = @()
 if (-not $KeepLeadingSilence) {
     $filters += "silenceremove=start_periods=1:start_silence=0.5:start_threshold=$SilenceThreshold"
@@ -107,6 +119,10 @@ if (-not $KeepLeadingSilence) {
 if ($StopSilence -gt 0) {
     # Reports silence to this script, which then stops ffmpeg
     $filters += "silencedetect=noise=${SilenceThreshold}:d=$($StopSilence.ToString($inv))"
+}
+if ($Tune432) {
+    # After silencedetect, so silence is judged on the original audio
+    $filters += 'rubberband=pitch=432/440:pitchq=quality'
 }
 
 $ffArgs = @('-hide_banner', '-f', 'dshow', '-i', "audio=$Device")
@@ -116,6 +132,7 @@ $ffArgs += @('-c:a', 'libmp3lame', '-b:a', $Bitrate, '-y', $OutputFile)
 
 "Recording from: $Device"
 "Saving to:      $OutputFile"
+if ($Tune432) { "Tuning:         A=432 Hz (Rubber Band)" }
 if (-not $KeepLeadingSilence) { "Waiting for audio to start..." }
 if ($StopSilence -gt 0) { "Stops after $StopSilence s of silence. Press q to stop sooner." }
 else { "Press q to stop." }

@@ -79,6 +79,7 @@ Unblock-File .\tools\*.ps1
 .\tools\Record-ComputerAudio.ps1                        # start when the sound starts, stop after 1 s of silence
 .\tools\Record-ComputerAudio.ps1 -StopSilence 3        # stop after 3 s of silence instead
 .\tools\Record-ComputerAudio.ps1 -StopSilence 0        # never stop on silence; record until you press q
+.\tools\Record-ComputerAudio.ps1 -Tune432              # retune from A=440 Hz to A=432 Hz
 .\tools\Record-ComputerAudio.ps1 -OutputFile song.mp3   # choose the file name
 .\tools\Record-ComputerAudio.ps1 -Duration 600          # stop by itself after 10 minutes
 .\tools\Record-ComputerAudio.ps1 -Device "Stereo Mix (Realtek(R) Audio)"   # pick a device
@@ -90,6 +91,8 @@ By default it:
 - **Trims the silence before the audio starts**, keeping 0.5 s of it, so you can start the script and then press play. Use `-KeepLeadingSilence` to keep it all.
 - **Stops by itself after 1 second of silence** once the audio has started. If a track has quiet passages that stop it too early, use a longer `-StopSilence` (e.g. `3`) or `-StopSilence 0` to turn this off. You can press `q` to stop at any time.
 - Treats anything quieter than `-30dB` as silence. Change it with `-SilenceThreshold` (e.g. `-40dB` if quiet passages count as silence, `-25dB` if background hiss stops it from detecting silence).
+
+**432 Hz tuning:** `-Tune432` retunes the recording from standard A=440 Hz to A=432 Hz (about 32 cents lower) using the Rubber Band pitch shifter, so the speed and length stay the same. It needs an ffmpeg build that includes Rubber Band; the `winget install Gyan.FFmpeg` build in Setup does. The script tells you if yours doesn't. It only makes sense for music that was tuned to 440 Hz to begin with, which is nearly all modern music.
 
 ### Split a recording on silence
 
