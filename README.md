@@ -80,6 +80,8 @@ Unblock-File .\tools\*.ps1
 .\tools\Record-ComputerAudio.ps1 -StopSilence 3        # stop after 3 s of silence instead
 .\tools\Record-ComputerAudio.ps1 -StopSilence 0        # never stop on silence; record until you press q
 .\tools\Record-ComputerAudio.ps1 -Tune432              # retune from A=440 Hz to A=432 Hz
+.\tools\Record-ComputerAudio.ps1 -DropSemitones 2      # two semitones lower
+.\tools\Record-ComputerAudio.ps1 -Tune432 -DropSemitones 1   # 432 Hz and one semitone lower
 .\tools\Record-ComputerAudio.ps1 -OutputFile song.mp3   # choose the file name
 .\tools\Record-ComputerAudio.ps1 -Duration 600          # stop by itself after 10 minutes
 .\tools\Record-ComputerAudio.ps1 -Device "Stereo Mix (Realtek(R) Audio)"   # pick a device
@@ -93,6 +95,14 @@ By default it:
 - Treats anything quieter than `-30dB` as silence. Change it with `-SilenceThreshold` (e.g. `-40dB` if quiet passages count as silence, `-25dB` if background hiss stops it from detecting silence).
 
 **432 Hz tuning:** `-Tune432` retunes the recording from standard A=440 Hz to A=432 Hz (about 32 cents lower) using the Rubber Band pitch shifter, so the speed and length stay the same. It needs an ffmpeg build that includes Rubber Band; the `winget install Gyan.FFmpeg` build in Setup does. The script tells you if yours doesn't. It only makes sense for music that was tuned to 440 Hz to begin with, which is nearly all modern music.
+
+**Lowering the pitch:** `-DropSemitones 1` or `-DropSemitones 2` lowers the pitch by one or two semitones, again keeping the speed the same. It can be used on its own or with `-Tune432`:
+
+| `-DropSemitones` | Without `-Tune432` | With `-Tune432` |
+|---|---|---|
+| 0 | no change | −31.77 cents |
+| 1 | −100 cents | −131.77 cents |
+| 2 (a whole step) | −200 cents | −231.77 cents |
 
 ### Split a recording on silence
 

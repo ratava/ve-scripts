@@ -26,6 +26,9 @@
 
 .EXAMPLE
     .\Record-ComputerAudio.ps1 -Tune432            # retune from A=440 Hz to A=432 Hz (Rubber Band)
+
+.EXAMPLE
+    .\Record-ComputerAudio.ps1 -Tune432 -DropSemitones 1   # 432 Hz and one semitone lower
 .NOTES
     DISCLAIMER: Provided as-is, without warranty of any kind. Use at your own
     risk. Test on copies of your files first; the author accepts no
@@ -48,6 +51,9 @@ param(
     # Retune the recording from A=440 Hz to A=432 Hz with the Rubber Band pitch
     # shifter (about 32 cents lower), keeping the speed the same.
     [switch] $Tune432,
+    # Lower the pitch by this many semitones (Rubber Band), keeping the speed
+    # the same. Combines with -Tune432.
+    [ValidateSet(0, 1, 2)] [int] $DropSemitones = 0,
     [switch] $ListDevices
 )
 
@@ -106,8 +112,13 @@ if (-not $Device) {
 
 $inv = [Globalization.CultureInfo]::InvariantCulture
 
-if ($Tune432 -and -not ((& ffmpeg -hide_banner -filters 2>&1) -match '\brubberband\b')) {
-    "Your ffmpeg doesn't include the rubberband filter needed for -Tune432."
+# Pitch change as a frequency ratio and in cents (100 cents = 1 semitone)
+$pitch = [math]::Pow(2, -$DropSemitones / 12)
+if ($Tune432) { $pitch *= 432 / 440 }
+$cents = 1200 * [math]::Log($pitch, 2)
+
+if ($pitch -ne 1 -and -not ((& ffmpeg -hide_banner -filters 2>&1) -match '\brubberband\b')) {
+    "Your ffmpeg doesn't include the rubberband filter needed for -Tune432 and -DropSemitones."
     "Install the full build with: winget install Gyan.FFmpeg  (see the Setup section of README.md)"
     return
 }
@@ -120,9 +131,9 @@ if ($StopSilence -gt 0) {
     # Reports silence to this script, which then stops ffmpeg
     $filters += "silencedetect=noise=${SilenceThreshold}:d=$($StopSilence.ToString($inv))"
 }
-if ($Tune432) {
+if ($pitch -ne 1) {
     # After silencedetect, so silence is judged on the original audio
-    $filters += 'rubberband=pitch=432/440:pitchq=quality'
+    $filters += "rubberband=pitch=$($pitch.ToString('0.000000', $inv)):pitchq=quality"
 }
 
 $ffArgs = @('-hide_banner', '-f', 'dshow', '-i', "audio=$Device")
@@ -132,7 +143,12 @@ $ffArgs += @('-c:a', 'libmp3lame', '-b:a', $Bitrate, '-y', $OutputFile)
 
 "Recording from: $Device"
 "Saving to:      $OutputFile"
-if ($Tune432) { "Tuning:         A=432 Hz (Rubber Band)" }
+if ($pitch -ne 1) {
+    $desc = @()
+    if ($Tune432) { $desc += 'A=432 Hz' }
+    if ($DropSemitones -gt 0) { $desc += "$DropSemitones semitone(s) lower" }
+    "Pitch:          {0}, {1} cents (Rubber Band)" -f ($desc -join ' + '), $cents.ToString('0.00', $inv)
+}
 if (-not $KeepLeadingSilence) { "Waiting for audio to start..." }
 if ($StopSilence -gt 0) { "Stops after $StopSilence s of silence. Press q to stop sooner." }
 else { "Press q to stop." }
