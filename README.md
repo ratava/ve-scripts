@@ -76,13 +76,20 @@ Unblock-File .\tools\*.ps1
 ### Record computer audio
 
 ```powershell
-.\tools\Record-ComputerAudio.ps1                        # record until you press q
+.\tools\Record-ComputerAudio.ps1                        # start when the sound starts, stop after 1 s of silence
+.\tools\Record-ComputerAudio.ps1 -StopSilence 3        # stop after 3 s of silence instead
+.\tools\Record-ComputerAudio.ps1 -StopSilence 0        # never stop on silence; record until you press q
 .\tools\Record-ComputerAudio.ps1 -OutputFile song.mp3   # choose the file name
 .\tools\Record-ComputerAudio.ps1 -Duration 600          # stop by itself after 10 minutes
 .\tools\Record-ComputerAudio.ps1 -Device "Stereo Mix (Realtek(R) Audio)"   # pick a device
 ```
 
-Without `-Device`, it uses the first virtual-audio-capturer, Stereo Mix or VB-Cable device it finds. Recordings are saved as `recording_<date>_<time>.mp3` at 192 kbps unless you say otherwise.
+Without `-Device`, it uses the first virtual-audio-capturer, Stereo Mix or VB-Cable device it finds. Recordings are saved as `recording_<date>_<time>.mp3` at 320 kbps unless you say otherwise (e.g. `-Bitrate 192k`).
+
+By default it:
+- **Trims the silence before the audio starts**, keeping 0.5 s of it, so you can start the script and then press play. Use `-KeepLeadingSilence` to keep it all.
+- **Stops by itself after 1 second of silence** once the audio has started. If a track has quiet passages that stop it too early, use a longer `-StopSilence` (e.g. `3`) or `-StopSilence 0` to turn this off. You can press `q` to stop at any time.
+- Treats anything quieter than `-30dB` as silence. Change it with `-SilenceThreshold` (e.g. `-40dB` if quiet passages count as silence, `-25dB` if background hiss stops it from detecting silence).
 
 ### Split a recording on silence
 
